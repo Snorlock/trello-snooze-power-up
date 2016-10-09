@@ -1,0 +1,21 @@
+{
+  "name": "Snooze Cards",
+  "details": "This power-up will allow you to hide Trello cards for a set amount of time then return to your list.",
+  "icon": {
+    "url": "./images/logo.png"
+  },
+  "author": "Snorre Lothar von Gohren Edwin",
+  "capabilities": [
+    "board-buttons",
+    "card-buttons",
+    "callback",
+    "card-badges",
+    "card-detail-badges",
+    "show-settings"
+  ],
+  "connectors": {
+    "iframe": {
+      "url": "./index.html"
+    }
+  }
+}
