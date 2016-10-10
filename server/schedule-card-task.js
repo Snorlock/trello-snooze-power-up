@@ -30,6 +30,10 @@ app.use(bodyParser.json());
 
 // GET
 app.get('/', function (req, res) {
+  res.send('Hello to you!')
+});
+
+app.get('/auth', function (req, res) {
   myFirebaseRef.child(req.query.id).set({
     token: req.query.value ? req.query.value : ""
   });

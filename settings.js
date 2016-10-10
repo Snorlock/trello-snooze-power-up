@@ -1,17 +1,12 @@
 var Promise = TrelloPowerUp.Promise;
 var t = TrelloPowerUp.iframe();
 
-t.render(function(){
-
-});
-console.log(Trello.authorized())
-
 var authenticationSuccess = function() {
   var secret = TrelloPowerUp.PostMessageIO.randomId();
 	console.log("Successful authentication. Token is:" + Trello.token());
   $.ajax({
     method: "GET",
-    url: "https://trello-snooze-webhook.herokuapp.com?id="+secret+"&value="+Trello.token()
+    url: "https://trello-snooze-webhook.herokuapp.com/auth?id="+secret+"&value="+Trello.token()
   })
   .done(function( msg ) {
     t.set('board', 'private', 'auth', 'true')
