@@ -5,10 +5,10 @@ var request = require('superagent');
 var app = Express();
 
 var config = {
-  serviceAccount: process.env.SERVICEACCOUNT,
+  serviceAccount: JSON.parse(process.env.SERVICEACCOUNT),
   databaseURL: process.env.FIREBASEURL,
   databaseAuthVariableOverride: {
-    uid: process.env.UID
+    uid: process.env.WORKERID
   }
 };
 
@@ -41,8 +41,12 @@ app.get('/auth', function (req, res) {
   firebaseRef.database().ref(req.query.id).set({
     token: req.query.value ? req.query.value : "",
     username: req.query.username
+  }).then(function(data){
+    res.json({ id: req.query });
+  }).catch(function(err){
+    res.json({ error:true, errorobj:err });
   });
-  res.json({ id: req.query });
+
 });
 
 app.get('/close', function (req, res) {

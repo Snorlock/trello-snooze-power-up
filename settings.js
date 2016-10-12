@@ -5,7 +5,7 @@ var authenticationSuccess = function() {
   Trello.get('members/me',{fields:'username'}, function(data) {
     $.ajax({
       method: "GET",
-      url: "https://trello-snooze-webhook.herokuapp.com/auth?id="+data.id+"&username="+data.username+"value="+Trello.token()
+      url: "https://trello-snooze-webhook.herokuapp.com/auth?id="+data.id+"&username="+data.username+"&value="+Trello.token()
     })
     .done(function( msg ) {
       t.set('board', 'private', 'auth', 'true')
