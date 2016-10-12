@@ -2,21 +2,22 @@ var Promise = TrelloPowerUp.Promise;
 var t = TrelloPowerUp.iframe();
 
 var authenticationSuccess = function() {
-  var secret = TrelloPowerUp.PostMessageIO.randomId();
-	console.log("Successful authentication. Token is:" + Trello.token());
-  $.ajax({
-    method: "GET",
-    url: "https://trello-snooze-webhook.herokuapp.com/auth?id="+secret+"&value="+Trello.token()
-  })
-  .done(function( msg ) {
-    t.set('board', 'private', 'auth', 'true')
-    .then(function() {
-      t.set('board', 'private', 'id', secret)
+  Trello.get('members/me',{fields:'username'}, function(data) {
+    $.ajax({
+      method: "GET",
+      url: "https://trello-snooze-webhook.herokuapp.com/auth?id="+data.id+"&username="+data.username+"value="+Trello.token()
+    })
+    .done(function( msg ) {
+      t.set('board', 'private', 'auth', 'true')
       .then(function() {
-        t.closePopup();
+        t.set('board', 'private', 'id', data.id)
+        .then(function() {
+          t.closePopup();
+        })
       })
     })
   })
+
 };
 var authenticationFailure = function() {
 	console.log("Failed authentication");

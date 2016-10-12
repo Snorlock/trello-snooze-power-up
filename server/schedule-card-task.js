@@ -1,12 +1,18 @@
 var Express = require('express');
-// var Webtask = require('webtask-tools');
 var firebase = require('firebase');
 var bodyParser = require('body-parser');
 var request = require('superagent');
 var app = Express();
 
-var myFirebaseRef = new Firebase(process.env.FIREBASEURL);
-var timeoutlist = {};
+var config = {
+  serviceAccount: process.env.SERVICEACCOUNT,
+  databaseURL: process.env.FIREBASEURL,
+  databaseAuthVariableOverride: {
+    uid: process.env.UID
+  }
+};
+
+var firebaseRef = firebase.initializeApp(config);
 var appKey = process.env.APPKEY;
 
 var allowCrossDomain = function(req, res, next) {
@@ -14,7 +20,6 @@ var allowCrossDomain = function(req, res, next) {
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
 
-    // intercept OPTIONS method
     if ('OPTIONS' == req.method) {
       res.send(200);
     }
@@ -28,34 +33,28 @@ app.use(allowCrossDomain);
 app.set('port', (process.env.PORT || 3000));
 app.use(bodyParser.json());
 
-// GET
 app.get('/', function (req, res) {
   res.send('Hello to you!')
 });
 
 app.get('/auth', function (req, res) {
-  myFirebaseRef.child(req.query.id).set({
-    token: req.query.value ? req.query.value : ""
+  firebaseRef.database().ref(req.query.id).set({
+    token: req.query.value ? req.query.value : "",
+    username: req.query.username
   });
   res.json({ id: req.query });
 });
 
-app.get('/status', function (req, res) {
-  res.json({ timeouts: timeoutlist })
-});
-
 app.get('/close', function (req, res) {
-  myFirebaseRef.child(req.query.userid).once('value')
+  firebaseRef.database().ref(req.query.userid).once('value')
   .then(function(snapshot) {
-    console.log(snapshot.val().token)
     closeCard(true, req.query.id, snapshot.val().token)
     .end(function(err,response){
       if(err) {
         console.log(err)
         res.json({error:true, errorobj:err})
       } else {
-        console.log("setting inteervaltask")
-        postCommentOnCard(req.query.id, snapshot.val().token, 'Card have been archived by SnoozeCards powerup');
+        postCommentOnCard(req.query.id, snapshot.val().token, 'Card have been archived by SnoozeCards powerup until '+new Date(req.query.unix));
         setIntervalTask(req.query.id, snapshot.val().token, req.query.unix)
         res.json({error:false})
       }
@@ -88,7 +87,6 @@ var openCardAfterTimeoutExpiration = function(cardId, token) {
         console.log(err);
         postCommentOnCard(cardId, token, 'Card could not be woken up, because error');
       } else {
-        console.log("Card reopened");
         postCommentOnCard(cardId, token, 'Card have succesfully been woken up');
       }
     })
@@ -111,5 +109,3 @@ var postCommentOnCard = function(cardId, token, message) {
 app.listen(app.get('port'), function () {
   console.log('Example app listening on port '+app.get('port'));
 });
-
-// module.exports = Webtask.fromExpress(app);
