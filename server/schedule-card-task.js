@@ -58,7 +58,7 @@ app.get('/close', function (req, res) {
         console.log(err)
         res.json({error:true, errorobj:err})
       } else {
-        postCommentOnCard(req.query.id, snapshot.val().token, 'Card have been archived by SnoozeCards powerup until '+new Date(req.query.unix));
+        postCommentOnCard(req.query.id, snapshot.val().token, 'Card have been archived by SnoozeCards powerup until '+new Date(parseInt(req.query.unix)));
         setIntervalTask(req.query.id, snapshot.val().token, req.query.unix)
         res.json({error:false})
       }
@@ -70,7 +70,6 @@ var setIntervalTask = function(cardId, token, unix) {
   var now = new Date();
   var ms = unix-now.valueOf()
   var timoutId = setTimeout(openCardAfterTimeoutExpiration, ms, cardId, token);
-  timeoutlist[cardId] = timoutId;
 }
 
 var closeCard = function(closed, cardId, token) {
