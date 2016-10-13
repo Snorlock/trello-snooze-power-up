@@ -3,6 +3,11 @@ var firebase = require('firebase');
 var bodyParser = require('body-parser');
 var request = require('superagent');
 var app = Express();
+var mongoose = require('mongoose');
+var Timeout = require('./models/timeout.js');
+
+// mongoose.connect(process.env.MONGODB_URI);
+mongoose.connect('mongodb://localhost:27017');
 
 var config = {
   serviceAccount: JSON.parse(process.env.SERVICEACCOUNT),
@@ -59,21 +64,28 @@ app.get('/close', function (req, res) {
         res.json({error:true, errorobj:err})
       } else {
         postCommentOnCard(req.query.id, snapshot.val().token, 'Card have been archived by SnoozeCards powerup until '+new Date(parseInt(req.query.unix)));
-        setIntervalTask(req.query.id, snapshot.val().token, req.query.unix)
+        saveIntervalTask(req.query.id, snapshot.val().token, req.query.unix, req.query.userid)
         res.json({error:false})
       }
     })
   })
 });
 
-var setIntervalTask = function(cardId, token, unix) {
-  var now = new Date();
-  var ms = unix-now.valueOf()
-  var timoutId = setTimeout(openCardAfterTimeoutExpiration, ms, cardId, token);
+var saveIntervalTask = function(card, token, unix, user) {
+  console.log(card)
+  console.log(user)
+  var timeout = new Timeout({card: card, unix: unix, user:user})
+  timeout.save(function(err, obj) {
+    if (err) {
+      console.log(err);
+      postCommentOnCard(cardid, token, 'Failed to save snooze task, reopen card and try again');
+    } else {
+      console.log('saved successfully:', obj);
+    }
+  })
 }
 
 var closeCard = function(closed, cardId, token) {
-
   return request('PUT', 'https://api.trello.com/1/cards/'+cardId+'/closed?key='+appKey+'&token='+token)
     .set('Content-Type', 'application/json')
     .send({ "value" : closed })
