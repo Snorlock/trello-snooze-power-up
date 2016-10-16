@@ -13,27 +13,28 @@ TrelloPowerUp.initialize({
             }
         }];
     },
-    'format-url': function(t, options) {
-        if(options.url.length > 20) {
-            return {
-                icon: './images/trello-icon.png'
-
-            };
-        } else {
-            throw t.NotHandled("Not a handled URL");
-        }
+    'authorization-status': function(t) {
+      // return a promise that resolves to the object with
+      // a property 'authorized' being true/false
+      return new TrelloPowerUp.Promise(function(resolve) {
+        t.get('board', 'private', 'auth', null).then(function(auth) {
+          if(auth) {
+            resolve({ authorized: true })
+          } else {
+            resolve({ authorized: false })
+          }
+        })
+      })
     },
-    'card-from-url': function(t, options) {
-        return {
-            name: 'All New Cards have this name',
-            desc: 'All New cards have this description'
-        };
-    },
-    'show-settings': function(t, options) {
+    'show-authorization': function(t) {
+        // return what to do when a user clicks the 'Authorize Account' link
+        // from the Power-Up gear icon which shows when 'authorization-status'
+        // returns { authorized: false }
+        // in this case we will open a popup
         t.popup({
-            title: "Authorize Account",
-            url: 'settings.html',
-            height: 250
-        });
-    }
+          title: 'My Auth Popup',
+          url: 'authorize.html',
+          height: 140,
+        })
+      },
 });

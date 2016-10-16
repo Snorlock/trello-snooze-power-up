@@ -6,7 +6,7 @@ var fixedFuture = now.add(1,'day').hour(8).minute(0).format()
 var rightShit = moment(fixedFuture).format('YYYY-MM-DDTHH:mm')
 
 t.get('board', 'private', 'auth', null).then(function(auth) {
-  console.log(auth);
+  console.log("AUTH");
   if(auth) {
     document.getElementById('content').innerHTML ='<p>Pick a date</p><input id="date" type="datetime-local" \><button id="snooze" class="mod-primary">Snooze</button>';
     document.getElementById('date').value = rightShit;
@@ -26,7 +26,7 @@ t.get('board', 'private', 'auth', null).then(function(auth) {
                 Trello.deauthorize();
                 t.popup({
                   title: "Authorize",
-                  url: './settings.html'
+                  url: './authorize.html'
                 });
               }
             } else {
@@ -36,15 +36,10 @@ t.get('board', 'private', 'auth', null).then(function(auth) {
         })
       })
     })
+  } else {
+    t.popup({
+      title: "Authorize",
+      url: './authorize.html'
+    });
   }
-})
-
-document.getElementById('auth').addEventListener('click', function(){
-  t.get('board', 'private', 'auth', null).then(function(auth) {
-    console.log("BOARD AUTH")
-    console.log(auth);
-    t.get('board', 'private', 'id', null).then(function(id) {
-      console.log(id);
-    })
-  })
 })

@@ -1,23 +1,15 @@
 var Express = require('express');
-var firebase = require('firebase');
+var Promise = require('bluebird');
 var bodyParser = require('body-parser');
 var request = require('superagent');
 var app = Express();
 var mongoose = require('mongoose');
+Promise.promisifyAll(mongoose);
 var Timeout = require('./models/timeout.js');
+var User = require('./models/user.js');
 var moment = require('moment');
 
 mongoose.connect(process.env.MONGODB_URI);
-
-var config = {
-  serviceAccount: JSON.parse(process.env.SERVICEACCOUNT),
-  databaseURL: process.env.FIREBASEURL,
-  databaseAuthVariableOverride: {
-    uid: process.env.WORKERID
-  }
-};
-
-var firebaseRef = firebase.initializeApp(config);
 var appKey = process.env.APPKEY;
 
 var allowCrossDomain = function(req, res, next) {
@@ -43,30 +35,29 @@ app.get('/', function (req, res) {
 });
 
 app.get('/auth', function (req, res) {
-  firebaseRef.database().ref(req.query.id).set({
-    token: req.query.value ? req.query.value : "",
-    username: req.query.username
-  }).then(function(data){
+  User.findOneAndUpdate({ id: req.query.id },{ token: req.query.value },{upsert: true})
+  .then(function() {
     res.json({ id: req.query });
-  }).catch(function(err){
+  })
+  .catch(function(err) {
+    console.log(err);
     res.json({ error:true, errorobj:err });
   });
-
 });
 
 app.get('/close', function (req, res) {
-  firebaseRef.database().ref(req.query.userid).once('value')
-  .then(function(snapshot) {
-    closeCard(true, req.query.id, snapshot.val().token)
+  User.findOne({ id: req.query.userid })
+  .then(function(obj) {
+    closeCard(true, req.query.id, obj.token)
     .end(function(err,response){
       if(err) {
         console.log(err)
         res.json({error:true, errorobj:err})
       } else {
         console.log("TRYING TO POST")
-        postCommentOnCard(req.query.id, snapshot.val().token, 'Card have been archived by SnoozeCards powerup until '+new Date(parseInt(req.query.unix)));
+        postCommentOnCard(req.query.id, obj.token, 'Card have been archived by SnoozeCards powerup until '+new Date(parseInt(req.query.unix)));
         console.log("SAVING INTERVAL TASK");
-        saveIntervalTask(req.query.id, snapshot.val().token, req.query.unix, req.query.userid)
+        saveIntervalTask(req.query.id, obj.token, req.query.unix, req.query.userid)
         res.json({error:false})
       }
     })
@@ -78,16 +69,15 @@ app.listen(app.get('port'), function () {
 });
 
 var saveIntervalTask = function(card, token, unix, user) {
-  console.log(card)
-  console.log(user)
-  var timeout = new Timeout({card: card, unix: unix, user:user})
-  timeout.save(function(err, obj) {
-    if (err) {
-      console.log(err);
-      postCommentOnCard(cardid, token, 'Failed to save snooze task, reopen card and try again');
-    } else {
-      console.log('saved successfully:', obj);
-    }
+  var expireTime = moment(parseInt(unix)).add(30,'s');
+  var timeout = new Timeout({card: card, unix: unix, user:user, expireAt: expireTime.toDate()});
+  timeout.save()
+  .then(function(obj) {
+    console.log('saved successfully:', obj);
+  })
+  .catch(function(err){
+    console.log(err);
+    postCommentOnCard(card, token, 'Failed to save snooze task, reopen card and try again');
   })
 }
 
@@ -108,7 +98,6 @@ var openCardAfterTimeoutExpiration = function(cardId, token) {
         console.log(err);
         postCommentOnCard(cardId, token, 'Card could not be woken up, because error');
       } else {
-        console.log(response);
         postCommentOnCard(cardId, token, 'Card have succesfully been woken up');
       }
     })
@@ -138,9 +127,9 @@ var checkAndUnsnoozeCards = function() {
     .cursor()
 
   cursor.on('data', function(doc) {
-    firebaseRef.database().ref(doc.user).once('value')
-    .then(function(snapshot) {
-      var token = snapshot.val().token;
+    User.findOne({ id: doc.user })
+    .then(function(user) {
+      var token = user.token;
       openCardAfterTimeoutExpiration(doc.card, token);
     })
   })
