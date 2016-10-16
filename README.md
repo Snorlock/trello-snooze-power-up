@@ -6,7 +6,7 @@ It is currently hosted on: https://trello-snooze-8c244.firebaseapp.com/manifest.
 ##Usage
 
 To use a home made Power Up in trello you have to add it yourself.    
-Either as a power up for the whole team or a previe power up for yourself.    
+Either as a power up for the whole team or a preview power up for yourself.    
 When its added, you have to authorize the app through power up settings, to access your trello info.    
 Then you can start to snooze cards!    
 This is done on a per card basis.
