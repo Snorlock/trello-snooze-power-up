@@ -16,6 +16,14 @@ var authenticationSuccess = function() {
         })
       })
     })
+  }, function(err) {
+    if (err.status === 401) {
+      Trello.deauthorize();
+      t.popup({
+        title: "Authorize",
+        url: './authorize.html'
+      });
+    }
   })
 
 };
