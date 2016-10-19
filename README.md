@@ -1,4 +1,4 @@
-#Trello snooze power up
+#Trello snooze power up [BETA]
 
 This is open for everybody to use and also fork if you want.    
 It is currently hosted on: https://trello-snooze-8c244.firebaseapp.com/manifest.json
